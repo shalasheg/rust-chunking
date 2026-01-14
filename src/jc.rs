@@ -1,4 +1,5 @@
 use crate::{Chunk, SizeParams};
+use gearhash::DEFAULT_TABLE;
 //https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10168293
 const KB: usize = 1024;
 
@@ -6,6 +7,8 @@ const KB: usize = 1024;
 const MIN_SIZE: usize = 512;
 const AVG_SIZE: usize = 8 * KB;
 const MAX_SIZE: usize = 16 * KB;
+const GEAR_TABLE: &gearhash::Table = &DEFAULT_TABLE;
+
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct JcParams {
@@ -138,31 +141,5 @@ const fn low_bits_mask(ones: u32) -> u64 {
     } else {
         (1u64 << ones) - 1
     }
-}
-
-
-//predefined array of 256 random 64-bit integers
-//"Gear maintains a table T that holds
-//256 hash values of one-byte numbers.""
-const GEAR_TABLE: [u64; 256] = make_gear_table();
-
-const fn splitmix64(mut x: u64) -> u64 {
-    x = x.wrapping_add(0x9E3779B97F4A7C15);
-    let mut z = x;
-    z = (z ^ (z >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
-    z = (z ^ (z >> 27)).wrapping_mul(0x94D049BB133111EB);
-    z ^ (z >> 31)
-}
-
-const fn make_gear_table() -> [u64; 256] {
-    let mut t = [0u64; 256];
-    let mut x = 0x1234_5678_9ABC_DEF0u64;
-    let mut i = 0usize;
-    while i < 256 {
-        x = splitmix64(x);
-        t[i] = x;
-        i += 1;
-    }
-    t
 }
 
