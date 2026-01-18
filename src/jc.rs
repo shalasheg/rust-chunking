@@ -1,14 +1,23 @@
 use crate::{Chunk, SizeParams};
 use gearhash::DEFAULT_TABLE;
-//https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10168293
-const KB: usize = 1024;
 
+const KB: usize = 1024;
 
 const MIN_SIZE: usize = 512;
 const AVG_SIZE: usize = 8 * KB;
 const MAX_SIZE: usize = 16 * KB;
+
 const GEAR_TABLE: &gearhash::Table = &DEFAULT_TABLE;
 
+const fn low_bits_mask(ones: u32) -> u64 {
+    if ones == 0 {
+        0
+    } else if ones >= 64 {
+        u64::MAX
+    } else {
+        (1u64 << ones) - 1
+    }
+}
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct JcParams {
@@ -20,7 +29,7 @@ pub struct JcParams {
 impl JcParams {
     /// c_ones = log2(c_avg) - 1, j_ones = log2(c_avg) - 2, js = c_avg/2.
     pub fn from_sizes(sizes: SizeParams) -> Self {
-        let avg_pow2 = sizes.avg.next_power_of_two().max(2); 
+        let avg_pow2 = sizes.avg.next_power_of_two().max(2);
         let log2 = (usize::BITS - 1) - avg_pow2.leading_zeros();
 
         let c_ones = log2.saturating_sub(1);
@@ -37,7 +46,6 @@ impl JcParams {
             jump_len: jump_len.max(1),
         }
     }
-
 }
 
 pub struct Chunker<'a> {
@@ -132,14 +140,3 @@ impl<'a> Iterator for Chunker<'a> {
         self.find_border().map(|length| Chunk::new(start, length))
     }
 }
-
-const fn low_bits_mask(ones: u32) -> u64 {
-    if ones == 0 {
-        0
-    } else if ones >= 64 {
-        u64::MAX
-    } else {
-        (1u64 << ones) - 1
-    }
-}
-
